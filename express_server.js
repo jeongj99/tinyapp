@@ -1,6 +1,12 @@
 const generateRandomString = () => {
-  
-}
+  let string = '';
+  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  for (let i = 0; i < 6; i++) {
+    const randomNum = Math.floor(Math.random() * characters.length);
+    string += characters[randomNum];
+  }
+  return string;
+};
 
 const express = require("express");
 const app = express();
@@ -35,7 +41,7 @@ app.get('/urls', (req, res) => {
 app.post('/urls', (req, res) => {
   console.log(req.body);
   res.send('Ok');
-})
+});
 
 app.get('/urls/new', (req, res) => {
   res.render('urls_new');
