@@ -1,3 +1,20 @@
+const urlDatabase = {
+  'b2xVn2': 'http://www.lighthouselabs.ca',
+  '9sm5xK': 'http://www.google.com'
+};
+
+const users = {
+};
+
+const getUserByEmail = email => {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user];
+    }
+  }
+  return null;
+};
+
 // Function that generates the short URL; used in the /urls/new POST route
 const generateRandomString = () => {
   let string = '';
@@ -15,14 +32,6 @@ const app = express();
 const PORT = 8080;
 
 app.set('view engine', 'ejs');
-
-const urlDatabase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com'
-};
-
-const users = {
-};
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -51,15 +60,20 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  const userID = generateRandomString();
-  users[userID] = {
-    id: userID,
-    email: req.body.email,
-    password: req.body.password
-  };
-  res.cookie('user_id', userID);
-  console.log(users);
-  res.redirect('/urls');
+  if (req.body.email === '' || req.body.password === '') {
+    res.send('400: Bad Request<br>Enter an email and a password.');
+  } else if (getUserByEmail(req.body.email)) {
+    res.send('400: Bad Request<br>This email is already registered.');
+  } else {
+    const userID = generateRandomString();
+    users[userID] = {
+      id: userID,
+      email: req.body.email,
+      password: req.body.password
+    };
+    res.cookie('user_id', userID);
+    res.redirect('/urls');
+  }
 });
 
 // POST route for '/login', where it creates a cookie with the username upon request
