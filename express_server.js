@@ -43,6 +43,10 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+app.get('/register', (req, res) => {
+  res.render('urls_register')
+})
+
 // POST route for '/login', where it creates a cookie with the username upon request
 app.post('/login', (req, res) => {
   res.cookie('username', req.body.username);
