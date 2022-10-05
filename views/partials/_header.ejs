@@ -13,9 +13,9 @@
     </div>
     <div class="pull-right">
       <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-        <% if (username) { %>
+        <% if (user) { %>
           <form class="form-inline my-2 my-lg-0" action="/logout" method="post">
-            <div class="text-light mr-2">Logged in as: <%= username %>
+            <div class="text-light mr-2">Logged in as: <%= user.email %>
             </div>
             <button class="btn btn-outline-light" type="submit">Logout</button>
           </form>
