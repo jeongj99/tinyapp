@@ -21,6 +21,9 @@ const urlDatabase = {
   '9sm5xK': 'http://www.google.com'
 };
 
+const users = {
+};
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -38,14 +41,26 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls', (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies['username']
+    user: users[req.cookies['user_id']]
   };
   res.render('urls_index', templateVars);
 });
 
 app.get('/register', (req, res) => {
-  res.render('urls_register')
-})
+  res.render('urls_register');
+});
+
+app.post('/register', (req, res) => {
+  const userID = generateRandomString();
+  users[userID] = {
+    id: userID,
+    email: req.body.email,
+    password: req.body.password
+  };
+  res.cookie('user_id', userID);
+  console.log(users);
+  res.redirect('/urls');
+});
 
 // POST route for '/login', where it creates a cookie with the username upon request
 app.post('/login', (req, res) => {
@@ -57,7 +72,7 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   res.clearCookie('username');
   res.redirect('/urls');
-})
+});
 
 // POST route for '/urls', where a new short URL with its long URL is added to database and displayed in the page
 app.post('/urls', (req, res) => {
@@ -68,7 +83,7 @@ app.post('/urls', (req, res) => {
 
 // GET route for '/urls/new', where it displays a page where one can submit a new url. It uses the urls_new.ejs template
 app.get('/urls/new', (req, res) => {
-  const templateVars = { username: req.cookies['username']}
+  const templateVars = { user: users[req.cookies['user_id']] };
   res.render('urls_new', templateVars);
 });
 
@@ -77,7 +92,7 @@ app.get('/urls/:id', (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies['username']
+    user: users[req.cookies['user_id']]
   };
   res.render('urls_show', templateVars);
 });
