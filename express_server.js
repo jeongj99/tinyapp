@@ -61,9 +61,9 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
-    res.send('400: Bad Request<br>Enter an email and a password.');
+    res.send('400 - Bad Request<br>Enter an email and a password.');
   } else if (getUserByEmail(req.body.email)) {
-    res.send('400: Bad Request<br>This email is already registered.');
+    res.send('400 - Bad Request<br>This email is already registered.');
   } else {
     const userID = generateRandomString();
     users[userID] = {
@@ -80,15 +80,20 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
-// POST route for '/login', where it creates a cookie with the username upon request
+// POST route for '/login', where it creates a cookie with the user_id upon request if email exists and password matches
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/urls');
+  const user = getUserByEmail(req.body.email);
+  if (!user || user.password !== req.body.password) {
+    res.send('403 - Forbidden<br>Incorrect email or password.');
+  } else {
+    res.cookie('user_id', user.id);
+    res.redirect('/urls');
+  }
 });
 
-// POST route for '/logout', where it deletes the cookie with the username upon request
+// POST route for '/logout', where it deletes the cookie user_id upon request
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
