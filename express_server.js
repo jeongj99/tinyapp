@@ -67,7 +67,7 @@ app.get('/urls', (req, res) => {
     usersURLs: urlsForUser(req.cookies['user_id'])
   };
   if (!users[req.cookies['user_id']]) {
-    res.send("<h2>Please login or register first</h2><div><p><a href='/login'>Login</a></p><p><a href='/register'>Register</a></p></div>");
+    res.render('urls_notLoggedIn', templateVars);
   } else {
     res.render('urls_index', templateVars);
   }
@@ -83,7 +83,7 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
-    res.send('400 - Bad Request<br>Enter an email and a password.');
+    res.status(400).send('400 - Bad Request<br>Enter an email and a password.');
   } else if (getUserByEmail(req.body.email)) {
     res.send('400 - Bad Request<br>This email is already registered.');
   } else {
@@ -153,13 +153,13 @@ app.get('/urls/:id', (req, res) => {
     id: req.params.id,
     url: urlDatabase[req.params.id],
     user: users[req.cookies['user_id']],
+    usersURLs: urlsForUser(req.cookies['user_id'])
   };
-  const usersURLs = urlsForUser(req.cookies['user_id']);
-  if (!usersURLs[req.params.id]) {
-    res.send("You do not have access to this url");
-  } else {
-    res.render('urls_show', templateVars);
-  }
+  // const usersURLs = urlsForUser(req.cookies['user_id']);
+  // if (!usersURLs[req.params.id]) {
+  //   res.send("You do not have access to this url");
+  // } else {
+  res.render('urls_show', templateVars);
 });
 
 // POST route for 'urls/:id', where it edits the long URL in the database and the change is displayed in the /url page upon request
@@ -171,7 +171,7 @@ app.post('/urls/:id', (req, res) => {
   } else if (!users[req.cookies['user_id']]) {
     res.send('Please login or register');
   } else if (!usersURL[req.params.id]) {
-    res.send('You do not have access to this url')
+    res.send('You do not have access to this url');
   } else {
     urlDatabase[id].longURL = req.body.editedLongURL;
     res.redirect('/urls');
@@ -186,7 +186,7 @@ app.post('/urls/:id/delete', (req, res) => {
   } else if (!users[req.cookies['user_id']]) {
     res.send('Please login or register');
   } else if (!usersURL[req.params.id]) {
-    res.send('You do not have access to this url')
+    res.send('You do not have access to this url');
   } else {
     delete urlDatabase[req.params.id];
     res.redirect('/urls');
@@ -196,8 +196,11 @@ app.post('/urls/:id/delete', (req, res) => {
 // GET route for /u/:id, where it just redirects you the actual destination of the long URL
 app.get('/u/:id', (req, res) => {
   const url = urlDatabase[req.params.id];
+  const usersURLs = urlsForUser(req.cookies['user_id']);
   if (!url) {
     res.send('<h5>404 - Not Found</h5><p>The requested short URL could not be found on this server</p>');
+  } else if (!usersURLs[req.params.id]) {
+    res.send('<h5>Access Denied</h5><p>You do not own this url</p>');
   } else {
     res.redirect(url.longURL);
   }
