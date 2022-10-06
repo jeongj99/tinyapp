@@ -9,15 +9,6 @@ const users = {
 
 };
 
-const getUserByEmail = email => {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return null;
-};
-
 // Function that generates the short URL; used in the /urls/new POST route
 const generateRandomString = () => {
   let string = '';
@@ -38,7 +29,7 @@ const urlsForUser = id => {
   }
   return usersURLs;
 };
-
+const { getUserByEmail } = require('./helpers');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const express = require('express');
@@ -88,7 +79,7 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
     res.status(400).send('400 - Bad Request<br>Enter an email and a password.');
-  } else if (getUserByEmail(req.body.email)) {
+  } else if (getUserByEmail(req.body.email, users)) {
     res.send('400 - Bad Request<br>This email is already registered.');
   } else {
     const userID = generateRandomString();
@@ -113,7 +104,7 @@ app.get('/login', (req, res) => {
 
 // POST route for '/login', where it creates a cookie with the user_id upon request if email exists and password matches
 app.post('/login', (req, res) => {
-  const user = getUserByEmail(req.body.email);
+  const user = getUserByEmail(req.body.email, users);
   if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
     res.send('403 - Forbidden<br>Incorrect email or password.');
   } else {
@@ -124,7 +115,7 @@ app.post('/login', (req, res) => {
 
 // POST route for '/logout', where it deletes the cookie user_id upon request
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls');
 });
 
