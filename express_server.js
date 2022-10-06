@@ -40,6 +40,7 @@ const urlsForUser = id => {
 };
 
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const express = require('express');
 const app = express();
 const PORT = 8080;
@@ -88,10 +89,11 @@ app.post('/register', (req, res) => {
     res.send('400 - Bad Request<br>This email is already registered.');
   } else {
     const userID = generateRandomString();
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10);
     users[userID] = {
       id: userID,
       email: req.body.email,
-      password: req.body.password
+      password: hashedPassword
     };
     res.cookie('user_id', userID);
     res.redirect('/urls');
@@ -109,7 +111,7 @@ app.get('/login', (req, res) => {
 // POST route for '/login', where it creates a cookie with the user_id upon request if email exists and password matches
 app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email);
-  if (!user || user.password !== req.body.password) {
+  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
     res.send('403 - Forbidden<br>Incorrect email or password.');
   } else {
     res.cookie('user_id', user.id);
