@@ -36,12 +36,7 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
-// GET route for '/urls.json' shows a JSON object literal of urlDatabase
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
-});
-
-// GET route for '/urls', where it displays the an html browser using the urls_index.ejs
+// GET route for '/urls', where it displays urls_notLoggedIn if not logged in, otherwise it renders urls_index
 app.get('/urls', (req, res) => {
   const user = users[req.session.user_id];
   const usersURLs = urlsForUser(req.session.user_id, urlDatabase);
@@ -49,13 +44,14 @@ app.get('/urls', (req, res) => {
     user,
     usersURLs
   };
-  if (!users[req.session.user_id]) {
+  if (!user) {
     res.render('urls_notLoggedIn', templateVars);
   } else {
     res.render('urls_index', templateVars);
   }
 });
 
+// GET route for '/register', where it redirects to /urls if logged in, otherwise it renders register
 app.get('/register', (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = {
@@ -68,6 +64,7 @@ app.get('/register', (req, res) => {
   }
 });
 
+// GET route for '/login', where it redirects to /urls if logged in, otherwise it renders login
 app.get('/login', (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = {
@@ -80,7 +77,7 @@ app.get('/login', (req, res) => {
   }
 });
 
-// GET route for '/urls/new', where it displays a page where one can submit a new url. It uses the urls_new.ejs template
+// GET route for '/urls/new', where it redirects to /urls if not logged in, otherwise it renders urls_new
 app.get('/urls/new', (req, res) => {
   const user = users[req.session.user_id];
   const templateVars = { user };
@@ -91,7 +88,13 @@ app.get('/urls/new', (req, res) => {
   }
 });
 
-// Get route for '/urls/:id', where id parameter is the short URL. urls_show.ejs used for template
+/*
+GET route for '/urls/:id':
+If not logged in -> renders urls_notLoggedIn
+If shortURL (id) does not exist -> renders shortURLDNE
+If user does not have access to shortURL -> renders doNotHaveAccess
+Otherwise -> renders urls_show
+*/
 app.get('/urls/:id', (req, res) => {
   const id = req.params.id;
   const user = users[req.session.user_id];
@@ -104,7 +107,7 @@ app.get('/urls/:id', (req, res) => {
     usersURLs
   };
   if (!user) {
-    res.render('urls_notLoggedin', templateVars);
+    res.render('urls_notLoggedIn', templateVars);
   } else if (!url) {
     res.render('shortURLDNE', templateVars);
   } else if (!usersURLs[id]) {
@@ -115,7 +118,13 @@ app.get('/urls/:id', (req, res) => {
   }
 });
 
-// GET route for /u/:id, where it just redirects you the actual destination of the long URL
+/*
+GET route for '/u/:id':
+If not logged in -> renders urls_notLoggedIn
+If shortURL (id) does not exist -> renders shortURLDNE
+If user does not have access to shortURL -> renders doNotHaveAccess
+Otherwise -> redirects to url.longURL (the actual url)
+*/
 app.get('/u/:id', (req, res) => {
   const id = req.params.id;
   const user = users[req.session.user_id];
@@ -128,7 +137,7 @@ app.get('/u/:id', (req, res) => {
     usersURLs
   };
   if (!user) {
-    res.render('urls_notLoggedin', templateVars);
+    res.render('urls_notLoggedIn', templateVars);
   } else if (!url) {
     res.render('shortURLDNE', templateVars);
   } else if (!usersURLs[id]) {
@@ -140,13 +149,23 @@ app.get('/u/:id', (req, res) => {
 
 // POST ROUTES-----------------------------------------------------------------------------------------------------
 
+/*
+POST route for '/register':
+If email or password are empty -> status code: 400; renders emptyRegistration
+If email exists in the users database -> status code: 400; renders alreadyRegistered
+Otherwise -> creates a userID, hashes the entered password, and it is stored in the users database.
+A session cookie is created and redirects to /urls
+*/
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const templateVars = {
+    user: users[req.session.user_id],
+  };
   if (email === '' || password === '') {
-    res.status(400).send('400 - Bad Request<br>Enter an email and a password.');
+    res.status(400).render('emptyRegistration', templateVars);
   } else if (getUserByEmail(email, users)) {
-    res.send('400 - Bad Request<br>This email is already registered.');
+    res.status(400).render('alreadyRegistered', templateVars);
   } else {
     const userID = generateRandomString();
     const hashedPassword = bcrypt.hashSync(password, 10);
@@ -160,27 +179,45 @@ app.post('/register', (req, res) => {
   }
 });
 
-// POST route for '/login', where it creates a cookie with the user_id upon request if email exists and password matches
+/*
+POST route for '/login':
+If email is not registerd or password doesn't match -> status code: 403; renders failedLogin
+Otherwise -> creates a session cookie and redirects to /urls
+*/
 app.post('/login', (req, res) => {
   const user = getUserByEmail(req.body.email, users);
-  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
-    res.send('403 - Forbidden<br>Incorrect email or password.');
+  const enteredPassword = req.body.password;
+  const templateVars = {
+    user: users[req.session.user_id],
+  };
+  if (!user || !bcrypt.compareSync(enteredPassword, user.password)) {
+    res.status(403).render('failedLogin', templateVars);
   } else {
     req.session.user_id = user.id;
     res.redirect('/urls');
   }
 });
 
-// POST route for '/logout', where it deletes the cookie user_id upon request
+// POST route for '/logout', where it deletes the cookies upon request and redirects to /urls
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 });
 
-// POST route for '/urls', where a new short URL with its long URL is added to database and displayed in the page
+/*
+POST route for '/urls':
+If user is not logged in -> renders urls_notLoggedIn
+Otherwise -> creates an id (short URL) for the long URL entered and it is stored in the urlDatabase. Redirects to /urls/:id.
+*/
 app.post('/urls', (req, res) => {
-  if (!users[req.session.user_id]) {
-    res.send("You must login to be able to shorten URLs");
+  const user = users[req.session.user_id];
+  const usersURLs = urlsForUser(req.session.user_id, urlDatabase);
+  const templateVars = {
+    user,
+    usersURLs
+  };
+  if (!user) {
+    res.render('urls_notLoggedIn', templateVars);
   } else {
     const id = generateRandomString();
     urlDatabase[id] = {
@@ -193,31 +230,67 @@ app.post('/urls', (req, res) => {
 
 // PUT ROUTES------------------------------------------------------------
 
+/*
+PUT route for '/urls/:id':
+If user is not logged in -> renders urls_notLoggedIn
+If short URL (id) does not exist -> renders shortURLDNE
+If user does not have access to shortURL -> renders doNotHaveAccess
+If an empty long URL is entered -> no edit; redirects to /urls
+Otherwise -> Accesses urlsDatabase and changes the long URL value of a short URL key. Redirects to /urls
+*/
 app.put('/urls/:id', (req, res) => {
   const id = req.params.id;
-  const usersURL = urlsForUser(req.session.user_id, urlDatabase);
-  if (!urlDatabase[req.params.id]) {
-    res.send('This ID does not exist');
-  } else if (!users[req.session.user_id]) {
-    res.send('Please login or register');
-  } else if (!usersURL[req.params.id]) {
-    res.send('You do not have access to this url');
+  const user = users[req.session.user_id];
+  const url = urlDatabase[id];
+  const usersURLs = urlsForUser(req.session.user_id, urlDatabase);
+  const edited = req.body.editedLongURL;
+  const templateVars = {
+    id,
+    url,
+    user,
+    usersURLs
+  };
+  if (!user) {
+    res.render('urls_notLoggedIn', templateVars);
+  } else if (!url) {
+    res.render('shortURLDNE', templateVars);
+  } else if (!usersURLs[id]) {
+    res.render('doNotHaveAccess', templateVars);
+  } else if (edited === '') {
+    res.redirect('/urls');
   } else {
-    urlDatabase[id].longURL = req.body.editedLongURL;
+    urlDatabase[id].longURL = edited;
     res.redirect('/urls');
   }
 });
 
 // DELETE ROUTES-------------------------------------------------------------------------------------------------------------------------
-// Delete route for '/urls/:id', where it upon request deletes the selected url from the database and the change is displayed in /urls
+
+/*
+PUT route for '/urls/:id':
+If user is not logged in -> renders urls_notLoggedIn
+If short URL (id) does not exist -> renders shortURLDNE
+If user does not have access to shortURL -> renders doNotHaveAccess
+Otherwise -> Deletes the short URL (key) and long URl (value) from urlsDatabase
+*/
+
 app.delete('/urls/:id/delete', (req, res) => {
-  const usersURL = urlsForUser(req.session.user_id, urlDatabase);
-  if (!urlDatabase[req.params.id]) {
-    res.send('This ID does not exist');
-  } else if (!users[req.session.user_id]) {
-    res.send('Please login or register');
-  } else if (!usersURL[req.params.id]) {
-    res.send('You do not have access to this url');
+  const id = req.params.id;
+  const user = users[req.session.user_id];
+  const url = urlDatabase[id];
+  const usersURLs = urlsForUser(req.session.user_id, urlDatabase);
+  const templateVars = {
+    id,
+    url,
+    user,
+    usersURLs
+  };
+  if (!user) {
+    res.render('urls_notLoggedIn', templateVars);
+  } else if (!url) {
+    res.render('shortURLDNE', templateVars);
+  } else if (!usersURLs[id]) {
+    res.render('doNotHaveAccess', templateVars);
   } else {
     delete urlDatabase[req.params.id];
     res.redirect('/urls');

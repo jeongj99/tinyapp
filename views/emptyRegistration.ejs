@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous" />
+  <title>TinyApp | Register
+  </title>
+</head>
+
+<body>
+  <%- include('partials/_header') %>
+    <div class="card-header"></div>
+    <div class="card-body">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-6">
+            <h5 class="text-danger">400 - Please Enter an Email and a Password</h5>
+            <h2>Create a TinyApp Account</h2>
+            <form action="/register" method="post">
+              <label for="email">Email address</label><br>
+              <input class="form-control" type="email" placeholder="Email address" name="email">
+              <br>
+              <label for="password">Password</label>
+              <input class="form-control" type="password" placeholder="Password" name="password">
+              <br>
+              <button class="btn btn-outline-success" type="submit">Register</button>
+              <br>
+              <br>
+              <p>Already have an account? <a href="/login">Login</a></p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
