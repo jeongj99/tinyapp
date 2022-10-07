@@ -1,13 +1,6 @@
-const urlDatabase = {
-  sgq3y6: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  }
-};
+const urlDatabase = {};
 
-const users = {
-
-};
+const users = {};
 
 // Function that generates the short URL; used in the /urls/new POST route
 const generateRandomString = () => {
@@ -32,6 +25,7 @@ const urlsForUser = id => {
 const { getUserByEmail } = require('./helpers');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const methodOverride = require('method-override');
 const express = require('express');
 const app = express();
 const PORT = 8080;
@@ -43,6 +37,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['tiny', 'app']
 }));
+app.use(methodOverride('_method'));
 
 // GET route for '/', where it just redirects to /urls
 app.get('/', (req, res) => {
@@ -159,7 +154,7 @@ app.get('/urls/:id', (req, res) => {
 });
 
 // POST route for 'urls/:id', where it edits the long URL in the database and the change is displayed in the /url page upon request
-app.post('/urls/:id', (req, res) => {
+app.put('/urls/:id', (req, res) => {
   const id = req.params.id;
   const usersURL = urlsForUser(req.session.user_id);
   if (!urlDatabase[req.params.id]) {
@@ -174,8 +169,8 @@ app.post('/urls/:id', (req, res) => {
   }
 });
 
-// POST route for '/urls/:id/delete', where it upon request deletes the selected url from the database and the change is displayed in /urls
-app.post('/urls/:id/delete', (req, res) => {
+// Delete route for '/urls/:id', where it upon request deletes the selected url from the database and the change is displayed in /urls
+app.delete('/urls/:id/delete', (req, res) => {
   const usersURL = urlsForUser(req.session.user_id);
   if (!urlDatabase[req.params.id]) {
     res.send('This ID does not exist');
