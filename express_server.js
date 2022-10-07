@@ -2,27 +2,12 @@ const urlDatabase = {};
 
 const users = {};
 
-// Function that generates the short URL; used in the /urls/new POST route
-const generateRandomString = () => {
-  let string = '';
-  const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  for (let i = 0; i < 6; i++) {
-    const randomNum = Math.floor(Math.random() * characters.length);
-    string += characters[randomNum];
-  }
-  return string;
-};
+const {
+  getUserByEmail,
+  generateRandomString,
+  urlsForUser
+} = require('./helpers');
 
-const urlsForUser = id => {
-  const usersURLs = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      usersURLs[url] = urlDatabase[url].longURL;
-    }
-  }
-  return usersURLs;
-};
-const { getUserByEmail } = require('./helpers');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const methodOverride = require('method-override');
@@ -54,7 +39,7 @@ app.get('/urls', (req, res) => {
   const templateVars = {
     urls: urlDatabase,
     user: users[req.session.user_id],
-    usersURLs: urlsForUser(req.session.user_id)
+    usersURLs: urlsForUser(req.session.user_id, urlDatabase)
   };
   if (!users[req.session.user_id]) {
     res.render('urls_notLoggedIn', templateVars);
@@ -144,19 +129,15 @@ app.get('/urls/:id', (req, res) => {
     id: req.params.id,
     url: urlDatabase[req.params.id],
     user: users[req.session.user_id],
-    usersURLs: urlsForUser(req.session.user_id)
+    usersURLs: urlsForUser(req.session.user_id, urlDatabase)
   };
-  // const usersURLs = urlsForUser(req.cookies['user_id']);
-  // if (!usersURLs[req.params.id]) {
-  //   res.send("You do not have access to this url");
-  // } else {
   res.render('urls_show', templateVars);
 });
 
 // POST route for 'urls/:id', where it edits the long URL in the database and the change is displayed in the /url page upon request
 app.put('/urls/:id', (req, res) => {
   const id = req.params.id;
-  const usersURL = urlsForUser(req.session.user_id);
+  const usersURL = urlsForUser(req.session.user_id, urlDatabase);
   if (!urlDatabase[req.params.id]) {
     res.send('This ID does not exist');
   } else if (!users[req.session.user_id]) {
@@ -171,7 +152,7 @@ app.put('/urls/:id', (req, res) => {
 
 // Delete route for '/urls/:id', where it upon request deletes the selected url from the database and the change is displayed in /urls
 app.delete('/urls/:id/delete', (req, res) => {
-  const usersURL = urlsForUser(req.session.user_id);
+  const usersURL = urlsForUser(req.session.user_id, urlDatabase);
   if (!urlDatabase[req.params.id]) {
     res.send('This ID does not exist');
   } else if (!users[req.session.user_id]) {
@@ -187,8 +168,15 @@ app.delete('/urls/:id/delete', (req, res) => {
 // GET route for /u/:id, where it just redirects you the actual destination of the long URL
 app.get('/u/:id', (req, res) => {
   const url = urlDatabase[req.params.id];
-  const usersURLs = urlsForUser(req.session.user_id);
-  if (!url) {
+  const usersURLs = urlsForUser(req.session.user_id, urlDatabase);
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.session.user_id],
+    usersURLs: urlsForUser(req.session.user_id, urlDatabase)
+  };
+  if (!users[req.session.user_id]) {
+    res.render('urls_notLoggedin', templateVars);
+  } else if (!url) {
     res.send('<h5>404 - Not Found</h5><p>The requested short URL could not be found on this server</p>');
   } else if (!usersURLs[req.params.id]) {
     res.send('<h5>Access Denied</h5><p>You do not own this url</p>');
