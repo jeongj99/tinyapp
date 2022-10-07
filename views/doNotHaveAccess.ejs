@@ -5,17 +5,17 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous" />
-  <title>TinyApp
+  <title>TinyApp | <%= id %>
   </title>
 </head>
 
 <body>
   <%- include('partials/_header') %>
-  <div class="card text-center">
-    <div class="card-header"></div>
-    <div class="card-body">
-      <h2>You are not logged in</h2>
-      <p>Please <a href="/login">login</a> or <a href="/register">register</a></p>
+    <div class="card text-center">
+      <div class="card-header"></div>
+      <div class="card-body">
+        <h5>Access Denied</h5>
+        <p>You do not own this URL</p>
+      </div>
     </div>
-  </div>
 </body>

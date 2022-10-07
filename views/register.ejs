@@ -12,12 +12,29 @@
 </head>
 
 <body>
-  <form action="/register" method="post">
-    <input type="email" placeholder="Email address" name="email">
-    <input type="password" placeholder="Password" name="password">
-    <button type="submit">Register</button>
-  </form>
-
+  <%- include('partials/_header') %>
+    <div class="card-header"></div>
+    <div class="card-body">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-6">
+            <h2>Create a TinyApp Account</h2>
+            <form action="/register" method="post">
+              <label for="email">Email address</label><br>
+              <input class="form-control" type="email" placeholder="Email address" name="email">
+              <br>
+              <label for="password">Password</label>
+              <input class="form-control" type="password" placeholder="Password" name="password">
+              <br>
+              <button class="btn btn-outline-success" type="submit">Register</button>
+              <br>
+              <br>
+              <p>Already have an account? <a href="/login">Login</a></p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 
 </html>
