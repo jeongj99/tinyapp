@@ -1,7 +1,5 @@
 // Databases------------
-const urlDatabase = {};
-
-const users = {};
+const { urlDatabase, users } = require('./databases');
 
 // Helper functions-------
 const {
@@ -176,6 +174,7 @@ app.post('/register', (req, res) => {
     };
     req.session.user_id = userID;
     res.redirect('/urls');
+    console.log(users);
   }
 });
 
@@ -224,6 +223,7 @@ app.post('/urls', (req, res) => {
       longURL: req.body.longURL,
       userID: req.session.user_id
     };
+    console.log(urlDatabase);
     res.redirect(`/urls/${id}`);
   }
 });
