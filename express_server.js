@@ -134,12 +134,8 @@ app.get('/u/:id', (req, res) => {
     user,
     usersURLs
   };
-  if (!user) {
-    res.render('urls_notLoggedIn', templateVars);
-  } else if (!url) {
+  if (!url) {
     res.render('shortURLDNE', templateVars);
-  } else if (!usersURLs[id]) {
-    res.render('doNotHaveAccess', templateVars);
   } else {
     res.redirect(url.longURL);
   }
@@ -174,7 +170,6 @@ app.post('/register', (req, res) => {
     };
     req.session.user_id = userID;
     res.redirect('/urls');
-    console.log(users);
   }
 });
 
@@ -223,7 +218,6 @@ app.post('/urls', (req, res) => {
       longURL: req.body.longURL,
       userID: req.session.user_id
     };
-    console.log(urlDatabase);
     res.redirect(`/urls/${id}`);
   }
 });
